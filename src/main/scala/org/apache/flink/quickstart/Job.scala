@@ -19,8 +19,7 @@ package org.apache.flink.quickstart
   */
 
 import org.apache.flink.api.scala._
-import scala.util.control.Exception.allCatch
-import org.apache.flink.quickstart.typeutils._
+import es.jipeream.scala.typeutils._
 
 object Job {
 
