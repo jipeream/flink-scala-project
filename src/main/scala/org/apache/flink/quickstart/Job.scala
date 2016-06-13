@@ -20,23 +20,10 @@ package org.apache.flink.quickstart
 
 import org.apache.flink.api.scala._
 import scala.util.control.Exception.allCatch
+import org.apache.flink.quickstart.typeutils._
 
-/**
-  * Skeleton for a Flink Job.
-  *
-  * For a full example of a Flink Job, see the WordCountJob.scala file in the
-  * same package/directory or have a look at the website.
-  *
-  * You can also generate a .jar file that you can submit on your Flink
-  * cluster. Just type
-  * {{{
-  *   mvn clean package
-  * }}}
-  * in the projects root directory. You will find the jar in
-  * target/flink-quickstart-0.1-SNAPSHOT-Sample.jar
-  *
-  */
 object Job {
+
   def main(args: Array[String]) {
     // set up the execution environment
     val env = ExecutionEnvironment.getExecutionEnvironment
@@ -44,36 +31,51 @@ object Job {
     val pictures = env.readCsvFile[Picture](
       filePath = "src/main/resources/pictures.csv",
       ignoreFirstLine = true,
-      pojoFields = Array("name", "year", "nominations", "rating", "duration", "genre1", "genre2", "release", "metacritic", "synopsis")
+      pojoFields = Array("name", "year", "nominationsStr", "rating", "duration", "genre1", "genre2", "release", "metacriticStr", "synopsis")
     )
-    //
+
     //    pictures.print()
     //    pictures.count()
-    //
-    def isInteger(s: String): Boolean = (allCatch opt s.toInt).isDefined
-    //
-//    val validNominations = pictures.filter(p => isInteger(p.nominations)).map(p => p.nominations)
-//    println(validNominations.reduce(_ + _).collect().head / validNominations.count)
-    //
-    val validNominations = pictures.filter(p => isInteger(p.nominations)).map(p => Tuple1[Double](p.nominations.toDouble))
-    println(validNominations.sum(0).collect().head._1 / validNominations.count())
-    //
-    //    // execute program
-    //    env.execute("Flink Scala API Skeleton")
+
+    val validNominations = pictures.filter(p => p.nominationsStr.isInteger).map(p => p.nominationsStr.toDouble)
+    println(validNominations.reduce(_ + _).collect().head / validNominations.count)
+
+    //val validNominations = pictures.filter(Utils.isInteger(_.nominationsStr)).map(_.nominationsStr.toDouble)
+    //println(validNominations.reduce(_ + _).collect().head / validNominations.count)
+
+    //val validNominations = pictures.filter(p => Utils.isInteger(p.nominationsStr)).map(p => Tuple1(p.nominationsStr.toDouble))
+    //println(validNominations.sum(0).collect().head._1 / validNominations.count())
+
+    //val validNominations = pictures.filter(Utils.isInteger(_.nominationsStr)).map(Tuple1(_.nominationsStr.toDouble))
+    //println(validNominations.sum(0).collect().head._1 / validNominations.count())
+
+    //val validNominations = pictures.filter(!_.nominations.isEmpty).map(p => Tuple1[Double](p.nominations.get))
+    //println(validNominations.sum(0).collect().head._1 / validNominations.count())
+
+    //val validNominations = pictures.filter(_.nominations > 0)
+    //println(validNominations.sum("nominations").collect().head.nominations / validNominations.count)
+
+    //// execute program
+    //env.execute("Flink Scala API Skeleton")
   }
 }
 
 case class Picture(
-  val name: String,
-  val year: Integer,
+  val name: String, // Slumdog Millionaire
+  val year: Integer, // 2008
   // val nominations:Integer,
   // val nominations:Option[Integer],
-  val nominations: String,
-  val rating: Double,
-  val duration: Integer,
-  val genre1: String,
-  val genre2: String,
-  val release: String,
-  val metacritic: String,
-  val synopsis: String
-)
+  val nominationsStr: String, // 10
+  val rating: Double, // 8
+  val duration: Integer, // 120
+  val genre1: String, // Drama
+  val genre2: String, // Romance
+  val release: String, // January
+  // val metacritic:Integer,
+  // val metacritic:Option[Integer],
+  val metacriticStr: String, // 86
+  val synopsis: String // "A Mumbai teen reflects on his upbringing in the slums when he is accused of cheating on the Indian Version of ""Who Wants to be a Millionaire?"""
+) {
+  def nominations: Option[Double] = nominationsStr.toOptionDouble
+  def metacritic: Option[Double] = metacriticStr.toOptionDouble
+}
